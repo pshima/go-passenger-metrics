@@ -32,7 +32,7 @@ func (p *PassengerCollection) RunPassengerStatus() error {
 	// *** Tip: if you install the 'xmllint' command then the XML output will be indented.
 	// While we can install xmllint, this hack will allow this to work regardless
 	// https://github.com/phusion/passenger/blob/085504c2e00b6e6322bb0ec97aa5ff43d037c729/bin/passenger-status#L174
-	output, err := exec.Command("passenger-status", "--show=xml", "|", "grep", "-v", "'***Tip:'").Output()
+	output, err := exec.Command("/usr/sbin/passenger-status", "--show=xml", "|", "grep", "-v", "'***Tip:'").Output()
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
