@@ -1,3 +1,8 @@
+# 0.0.5
+- Prefix all output
+- Add a quiet option
+- Bug fixes and error checking
+
 # 0.0.4
 - Revert xmllint testing
 
