@@ -9,7 +9,18 @@ import (
 	"time"
 )
 
+const appname string = "go-passenger-metrics"
+
+var quiet bool = false
+
 func main() {
+	args := os.Args
+	if len(args) > 1 {
+		if args[1] == "quiet" {
+			quiet = true
+		}
+	}
+
 	statsite_host := os.Getenv("GRAPHITE_HOST")
 	statsite_port := os.Getenv("GRAPHITE_PORT")
 	if statsite_host == "" {
@@ -19,12 +30,12 @@ func main() {
 		log.Fatal("GRAPHITE_PORT is empty, exiting")
 	}
 	statsite_addr := fmt.Sprintf("%s:%s", statsite_host, statsite_port)
-	log.Printf("Starting metrics output to %s", statsite_addr)
+	log.Printf("%s Starting metrics output to %s", appname, statsite_addr)
 	sink, err := statsite.NewStatsiteSink(statsite_addr)
 	if err != nil {
 		log.Fatalf("Error connecting", err)
 	}
-	if _, err := statsite.NewGlobal(statsite.DefaultConfig("go-passenger-metrics"), sink); err != nil {
+	if _, err := statsite.NewGlobal(statsite.DefaultConfig(appname), sink); err != nil {
 		log.Fatalf("Error starting metrics layer")
 	}
 	ticker := time.NewTicker(10 * time.Second)
@@ -36,13 +47,16 @@ func main() {
 
 func run() {
 	p := &passengermetrics.PassengerCollection{}
-	p.RunPassengerStatus()
-	err := p.ParseRawOutput()
-	if err != nil {
-		log.Fatal(err)
+	if err := p.RunPassengerStatus(); err != nil {
+		log.Fatalf("%s Error running passenger status: %v", appname, err)
+	}
+	if err := p.ParseRawOutput(); err != nil {
+		log.Fatalf("%s %v", appname, err)
 	}
 
-	log.Printf("Queue Depth: %v", p.ParsedOutput.QueueLength)
+	if quiet != true {
+		log.Printf("%s Queue Depth: %v", appname, p.ParsedOutput.QueueLength)
+	}
 
 	statsite.SetGauge([]string{"passenger-queue-depth"}, float32(p.ParsedOutput.QueueLength))
 }
