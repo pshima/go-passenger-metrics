@@ -9,14 +9,17 @@ import (
 	"time"
 )
 
-const appname string = "go-passenger-metrics"
+const (
+	passengerPath string = "/usr/sbin/passenger-status"
+	appname       string = "go-passenger-metrics"
+)
 
 var quiet bool = false
 
 func main() {
 	args := os.Args
 	if len(args) > 1 {
-		if args[1] == "quiet" {
+		if args[1] == "-quiet" {
 			quiet = true
 		}
 	}
@@ -47,6 +50,7 @@ func main() {
 
 func run() {
 	p := &passengermetrics.PassengerCollection{}
+	p.PassengerPath = passengerPath
 	if err := p.RunPassengerStatus(); err != nil {
 		log.Fatalf("%s Error running passenger status: %v", appname, err)
 	}

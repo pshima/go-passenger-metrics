@@ -9,13 +9,10 @@ import (
 	"os/exec"
 )
 
-const (
-	passengerPath string = "/usr/sbin/passenger-status"
-)
-
 type PassengerCollection struct {
-	RawOutput    []byte
-	ParsedOutput *PassengerData
+	RawOutput     []byte
+	ParsedOutput  *PassengerData
+	PassengerPath string
 }
 
 type PassengerData struct {
@@ -33,10 +30,10 @@ type Process struct {
 }
 
 func (p *PassengerCollection) RunPassengerStatus() error {
-	if _, err := os.Stat(passengerPath); os.IsNotExist(err) {
-		return fmt.Errorf("Passenger not found at: %v", passengerPath)
+	if _, err := os.Stat(p.PassengerPath); os.IsNotExist(err) {
+		return fmt.Errorf("Passenger not found at: %v", p.PassengerPath)
 	}
-	output, err := exec.Command(passengerPath, "--show=xml").Output()
+	output, err := exec.Command(p.PassengerPath, "--show=xml").Output()
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
@@ -47,7 +44,6 @@ func (p *PassengerCollection) RunPassengerStatus() error {
 func (p *PassengerCollection) ParseRawOutput() error {
 	out := &PassengerData{}
 	dec := xml.NewDecoder(bytes.NewReader(p.RawOutput))
-	fmt.Print(p.RawOutput)
 	dec.CharsetReader = charset.NewReaderLabel
 	err := dec.Decode(out)
 	if err != nil {
