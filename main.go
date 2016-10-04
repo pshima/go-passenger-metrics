@@ -65,4 +65,5 @@ func run() {
 	}
 
 	statsite.SetGauge([]string{"passenger-queue-depth"}, float32(p.ParsedOutput.QueueLength))
+	statsite.SetGauge([]string{"passenger-stats-length"}, float32(len(p.RawOutput)))
 }
