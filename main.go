@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	statsite "github.com/armon/go-metrics"
-	"github.com/pshima/go-passenger-metrics/metrics"
 	"log"
 	"os"
 	"time"
+
+	statsite "github.com/armon/go-metrics"
+	"github.com/pshima/go-passenger-metrics/metrics"
 )
 
 const (
 	passengerPath string = "/usr/sbin/passenger-status"
-	appname       string = "go-passenger-metrics"
+	appName       string = "go-passenger-metrics"
 )
 
-var quiet bool = false
+var quiet bool
 
 func main() {
 	args := os.Args
@@ -24,21 +25,21 @@ func main() {
 		}
 	}
 
-	statsite_host := os.Getenv("GRAPHITE_HOST")
-	statsite_port := os.Getenv("GRAPHITE_PORT")
-	if statsite_host == "" {
+	statsiteHost := os.Getenv("GRAPHITE_HOST")
+	statsitePort := os.Getenv("GRAPHITE_PORT")
+	if statsiteHost == "" {
 		log.Fatal("GRAPHITE_HOST is empty, exiting")
 	}
-	if statsite_port == "" {
+	if statsitePort == "" {
 		log.Fatal("GRAPHITE_PORT is empty, exiting")
 	}
-	statsite_addr := fmt.Sprintf("%s:%s", statsite_host, statsite_port)
-	log.Printf("%s Starting metrics output to %s", appname, statsite_addr)
-	sink, err := statsite.NewStatsiteSink(statsite_addr)
+	statsiteAddr := fmt.Sprintf("%s:%s", statsiteHost, statsitePort)
+	log.Printf("%s Starting metrics output to %s", appName, statsiteAddr)
+	sink, err := statsite.NewStatsiteSink(statsiteAddr)
 	if err != nil {
-		log.Fatalf("Error connecting", err)
+		log.Fatalf("Error connecting: %v", err)
 	}
-	if _, err := statsite.NewGlobal(statsite.DefaultConfig(appname), sink); err != nil {
+	if _, err := statsite.NewGlobal(statsite.DefaultConfig(appName), sink); err != nil {
 		log.Fatalf("Error starting metrics layer")
 	}
 	ticker := time.NewTicker(10 * time.Second)
@@ -49,17 +50,18 @@ func main() {
 }
 
 func run() {
-	p := &passengermetrics.PassengerCollection{}
-	p.PassengerPath = passengerPath
+	p := passengermetrics.PassengerCollection{
+		PassengerPath: passengerPath,
+	}
 	if err := p.RunPassengerStatus(); err != nil {
-		log.Fatalf("%s Error running passenger status: %v", appname, err)
+		log.Fatalf("%s Error running passenger status: %v", appName, err)
 	}
 	if err := p.ParseRawOutput(); err != nil {
-		log.Fatalf("%s %v", appname, err)
+		log.Fatalf("%s %v", appName, err)
 	}
 
 	if quiet != true {
-		log.Printf("%s Queue Depth: %v", appname, p.ParsedOutput.QueueLength)
+		log.Printf("%s Queue Depth: %v", appName, p.ParsedOutput.QueueLength)
 	}
 
 	statsite.SetGauge([]string{"passenger-queue-depth"}, float32(p.ParsedOutput.QueueLength))
